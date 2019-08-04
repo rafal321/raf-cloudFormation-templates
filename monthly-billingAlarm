@@ -1,0 +1,108 @@
+# As AWS Billing is only handled in N. Virginia, you must run this template in US-East-1
+# CF ver.2 DEPLOYED - aimia-preprod-elk
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Billing Alerts for AWS Account'
+
+#================================================================================
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Alarm Configuration"
+        Parameters:
+          - EmailAddress
+          - AlarmThresholds
+          - AccName
+    ParameterLabels:
+      EmailAddress:
+        default: "What's your email address?"
+      AlarmThresholds:
+        default: "What dollar amounts to alert on?"
+      AccName:
+        default: "Enter account name"
+
+#================================================================================
+
+Parameters:
+  EmailAddress:
+    Type: String
+    Description: "Enter your email address for billing alerts"
+    AllowedPattern: ^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$
+  AlarmThresholds:
+    Type: CommaDelimitedList
+    Description: "Enter three (3) values for the billing alarms (e.g. 10,20,50)"
+  AccName:
+    Type: String
+    Description: "If parameter left empty, defaults to AccountID number"
+#================================================================================
+
+Resources:
+  BillingAlertOne:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: BillingAlertTopic
+    Properties:
+      AlarmActions:
+        - !Ref BillingAlertTopic
+      AlarmDescription: !Join [" ", ["WARNING! Account", !Ref "AWS::AccountId", !Ref AccName, "- Billing Alert for $", !Select [0, !Ref AlarmThresholds], ".00"]]
+      AlarmName: !Join ["", ["Billing Alert - Estimated Bill Exceeds $", !Select [0, !Ref AlarmThresholds]]]
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Currency
+          Value: USD
+      EvaluationPeriods: 1
+      MetricName: EstimatedCharges
+      Namespace: AWS/Billing
+      Period: 21600
+      Statistic: Maximum
+      Threshold: !Select [0, !Ref AlarmThresholds]
+
+  BillingAlertTwo:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: BillingAlertTopic
+    Properties:
+      AlarmActions:
+        - !Ref BillingAlertTopic
+      AlarmDescription: !Join [" ", ["ALERT! Account", !Ref "AWS::AccountId", !Ref AccName, "- Billing Alert for $", !Select [1, !Ref AlarmThresholds], ".00"]]
+      AlarmName: !Join ["", ["Billing Alert - Estimated Bill Exceeds $", !Select [1, !Ref AlarmThresholds]]]
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Currency
+          Value: USD
+      EvaluationPeriods: 1
+      MetricName: EstimatedCharges
+      Namespace: AWS/Billing
+      Period: 21600
+      Statistic: Maximum
+      Threshold: !Select [1, !Ref AlarmThresholds]
+
+  BillingAlertThree:
+    Type: AWS::CloudWatch::Alarm
+    DependsOn: BillingAlertTopic
+    Properties:
+      AlarmActions:
+        - !Ref BillingAlertTopic
+      AlarmDescription: !Join [" ", ["EMERGENCY! Account", !Ref "AWS::AccountId", !Ref AccName, "- Billing Alert for $", !Select [2, !Ref AlarmThresholds], ".00"]]
+      AlarmName: !Join ["", ["Billing Alert - Estimated Bill Exceeds $", !Select [2, !Ref AlarmThresholds]]]
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Currency
+          Value: USD
+      EvaluationPeriods: 1
+      MetricName: EstimatedCharges
+      Namespace: AWS/Billing
+      Period: 21600
+      Statistic: Maximum
+      Threshold: !Select [2, !Ref AlarmThresholds]
+#================================================================================
+
+  BillingAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: "Billing-Alerts"
+      DisplayName: Billing Alerts
+      Subscription:
+      - Endpoint: !Ref EmailAddress
+        Protocol: email
