@@ -1,4 +1,11 @@
 
+RAF
+
+DOESNT WORK YET - 20190806
+mam error index out of range w wewnetrznym try catch statement
+
+
+
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'Copy tags from AMI to EC2 & from EC2 to AMI'
 #==ver.7=========================================
