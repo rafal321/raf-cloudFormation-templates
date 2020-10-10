@@ -1,5 +1,5 @@
 # As AWS Billing is only handled in N. Virginia, you must run this template in US-East-1
-# CF ver.2 DEPLOYED - aimia-preprod-elk
+# CF ver.2 DEPLOYED
 
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'Billing Alerts for AWS Account'
